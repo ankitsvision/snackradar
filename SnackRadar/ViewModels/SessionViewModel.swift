@@ -21,6 +21,7 @@ class SessionViewModel: ObservableObject {
     
     private let authService = AuthService.shared
     private let userRepository = UserRepository.shared
+    private let pushNotificationManager = PushNotificationManager.shared
     
     init() {
         setupAuthStateListener()
@@ -59,6 +60,10 @@ class SessionViewModel: ObservableObject {
                 self.updateSessionState(for: profile)
                 self.setupUserProfileListener(uid: user.uid)
             }
+            
+            if profile.pushNotificationsEnabled {
+                await refreshPushToken(for: user.uid)
+            }
         } catch RepositoryError.documentNotFound {
             DispatchQueue.main.async {
                 self.sessionState = .signedOut
@@ -68,6 +73,16 @@ class SessionViewModel: ObservableObject {
                 self.errorMessage = error.localizedDescription
                 self.sessionState = .signedOut
             }
+        }
+    }
+    
+    private func refreshPushToken(for userId: String) async {
+        guard pushNotificationManager.permissionStatus == .authorized else { return }
+        
+        do {
+            try await pushNotificationManager.updatePushToken(for: userId)
+        } catch {
+            print("Error refreshing push token: \(error.localizedDescription)")
         }
     }
     
@@ -104,13 +119,44 @@ class SessionViewModel: ObservableObject {
     }
     
     func signOut() {
-        do {
-            userProfileListener?.remove()
-            userProfile = nil
-            try authService.signOut()
-            sessionState = .signedOut
-        } catch {
-            errorMessage = error.localizedDescription
+        Task {
+            if let userId = userProfile?.uid {
+                do {
+                    try await pushNotificationManager.removePushToken(for: userId)
+                } catch {
+                    print("Error removing push token on logout: \(error.localizedDescription)")
+                }
+            }
+            
+            DispatchQueue.main.async {
+                do {
+                    self.userProfileListener?.remove()
+                    self.userProfile = nil
+                    try self.authService.signOut()
+                    self.sessionState = .signedOut
+                } catch {
+                    self.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+    
+    func updatePushNotifications(enabled: Bool) async throws {
+        guard let userId = userProfile?.uid else {
+            throw NSError(domain: "SessionViewModel", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])
+        }
+        
+        if enabled {
+            let granted = await pushNotificationManager.requestPermission()
+            
+            if granted {
+                try await pushNotificationManager.updatePushToken(for: userId)
+                try await userRepository.updatePushNotificationsEnabled(uid: userId, enabled: true)
+            } else {
+                throw NSError(domain: "SessionViewModel", code: -2, userInfo: [NSLocalizedDescriptionKey: "Notification permission denied"])
+            }
+        } else {
+            try await userRepository.removePushToken(uid: userId)
         }
     }
     

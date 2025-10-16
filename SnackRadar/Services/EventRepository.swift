@@ -192,4 +192,12 @@ class EventRepository: EventRepositoryProtocol {
             throw RepositoryError.firestoreError(error.localizedDescription)
         }
     }
+    
+    func broadcastEventNotification(for event: Event) async throws {
+        guard event.isApproved else {
+            throw NSError(domain: "EventRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Event must be approved before broadcasting"])
+        }
+        
+        try await PushNotificationManager.shared.broadcastEventNotification(event: event, campusId: event.campusId)
+    }
 }

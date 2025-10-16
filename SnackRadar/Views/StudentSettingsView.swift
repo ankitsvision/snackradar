@@ -3,6 +3,9 @@ import SwiftUI
 struct StudentSettingsView: View {
     @EnvironmentObject var sessionViewModel: SessionViewModel
     @State private var notificationsEnabled: Bool = false
+    @State private var isLoading: Bool = false
+    @State private var showError: Bool = false
+    @State private var errorMessage: String = ""
     
     var body: some View {
         NavigationView {
@@ -44,9 +47,17 @@ struct StudentSettingsView: View {
                                 .customFont(AppFonts.body)
                         }
                         .tint(AppColors.primaryBlue)
+                        .disabled(isLoading)
+                        .onChange(of: notificationsEnabled) { newValue in
+                            handleNotificationToggle(enabled: newValue)
+                        }
                     } header: {
                         Text("Notifications")
                             .customFont(AppFonts.caption)
+                    } footer: {
+                        Text("Receive notifications about new events on your campus")
+                            .customFont(AppFonts.caption)
+                            .foregroundColor(AppColors.secondaryText)
                     }
                     
                     Section {
@@ -67,6 +78,41 @@ struct StudentSettingsView: View {
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
+            .alert("Error", isPresented: $showError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(errorMessage)
+            }
+            .onAppear {
+                if let profile = sessionViewModel.userProfile {
+                    notificationsEnabled = profile.pushNotificationsEnabled
+                }
+            }
+            .onChange(of: sessionViewModel.userProfile) { newProfile in
+                if let profile = newProfile {
+                    notificationsEnabled = profile.pushNotificationsEnabled
+                }
+            }
+        }
+    }
+    
+    private func handleNotificationToggle(enabled: Bool) {
+        isLoading = true
+        
+        Task {
+            do {
+                try await sessionViewModel.updatePushNotifications(enabled: enabled)
+            } catch {
+                await MainActor.run {
+                    notificationsEnabled = !enabled
+                    errorMessage = error.localizedDescription
+                    showError = true
+                }
+            }
+            
+            await MainActor.run {
+                isLoading = false
+            }
         }
     }
 }
