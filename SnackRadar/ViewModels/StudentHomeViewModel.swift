@@ -17,6 +17,7 @@ class StudentHomeViewModel: ObservableObject {
     init(eventRepository: EventRepositoryProtocol = EventRepository.shared) {
         self.eventRepository = eventRepository
         setupCampusObserver()
+        setupRefreshObserver()
     }
     
     deinit {
@@ -27,6 +28,14 @@ class StudentHomeViewModel: ObservableObject {
         campusSelectionManager.$selectedCampusId
             .sink { [weak self] campusId in
                 self?.selectedCampusId = campusId
+                self?.startListeningToEvents()
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func setupRefreshObserver() {
+        NotificationCenter.default.publisher(for: NSNotification.Name("RefreshEvents"))
+            .sink { [weak self] _ in
                 self?.startListeningToEvents()
             }
             .store(in: &cancellables)

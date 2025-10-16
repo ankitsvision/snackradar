@@ -117,4 +117,20 @@ class SessionViewModel: ObservableObject {
     func clearError() {
         errorMessage = nil
     }
+    
+    func refreshUserProfile() async {
+        guard let uid = userProfile?.uid else { return }
+        
+        do {
+            let profile = try await userRepository.getUserProfile(uid: uid)
+            await MainActor.run {
+                self.userProfile = profile
+                self.updateSessionState(for: profile)
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
 }

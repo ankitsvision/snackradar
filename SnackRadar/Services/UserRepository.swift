@@ -88,6 +88,46 @@ class UserRepository {
         }
     }
     
+    func updateNotificationPreference(uid: String, enabled: Bool) async throws {
+        let docRef = db.collection(usersCollection).document(uid)
+        
+        do {
+            try await docRef.updateData(["notificationsEnabled": enabled])
+        } catch {
+            throw RepositoryError.firestoreError(error.localizedDescription)
+        }
+    }
+    
+    func requestRoleUpgrade(uid: String) async throws {
+        let docRef = db.collection(usersCollection).document(uid)
+        
+        do {
+            try await docRef.updateData([
+                "roleUpgradeRequested": true,
+                "userRole": UserRole.organizer.rawValue,
+                "isApproved": false
+            ])
+        } catch {
+            throw RepositoryError.firestoreError(error.localizedDescription)
+        }
+    }
+    
+    func updateSocialLinks(uid: String, socialLinks: SocialLinks?) async throws {
+        let docRef = db.collection(usersCollection).document(uid)
+        
+        do {
+            if let socialLinks = socialLinks {
+                let socialLinksData = try JSONEncoder().encode(socialLinks)
+                let socialLinksDict = try JSONSerialization.jsonObject(with: socialLinksData) as? [String: Any]
+                try await docRef.updateData(["socialLinks": socialLinksDict ?? [:]])
+            } else {
+                try await docRef.updateData(["socialLinks": [:]])
+            }
+        } catch {
+            throw RepositoryError.firestoreError(error.localizedDescription)
+        }
+    }
+    
     func listenToUserProfile(uid: String, completion: @escaping (Result<UserProfile, RepositoryError>) -> Void) -> ListenerRegistration {
         let docRef = db.collection(usersCollection).document(uid)
         

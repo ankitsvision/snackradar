@@ -2,6 +2,7 @@ import SwiftUI
 
 struct StudentTabView: View {
     @State private var selectedTab: Int = 0
+    @EnvironmentObject var sessionViewModel: SessionViewModel
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -17,7 +18,7 @@ struct StudentTabView: View {
                 }
                 .tag(1)
             
-            StudentSettingsView()
+            SettingsView(sessionViewModel: sessionViewModel)
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }

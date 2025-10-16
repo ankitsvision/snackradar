@@ -9,6 +9,9 @@ struct UserProfile: Codable {
     var pushToken: String?
     var createdAt: Date
     var isApproved: Bool
+    var notificationsEnabled: Bool
+    var roleUpgradeRequested: Bool
+    var socialLinks: SocialLinks?
     
     enum CodingKeys: String, CodingKey {
         case uid
@@ -18,9 +21,12 @@ struct UserProfile: Codable {
         case pushToken
         case createdAt
         case isApproved
+        case notificationsEnabled
+        case roleUpgradeRequested
+        case socialLinks
     }
     
-    init(uid: String, email: String, userRole: UserRole, campusId: String? = nil, pushToken: String? = nil, createdAt: Date = Date(), isApproved: Bool = true) {
+    init(uid: String, email: String, userRole: UserRole, campusId: String? = nil, pushToken: String? = nil, createdAt: Date = Date(), isApproved: Bool = true, notificationsEnabled: Bool = false, roleUpgradeRequested: Bool = false, socialLinks: SocialLinks? = nil) {
         self.uid = uid
         self.email = email
         self.userRole = userRole
@@ -28,6 +34,9 @@ struct UserProfile: Codable {
         self.pushToken = pushToken
         self.createdAt = createdAt
         self.isApproved = userRole == .student ? true : false
+        self.notificationsEnabled = notificationsEnabled
+        self.roleUpgradeRequested = roleUpgradeRequested
+        self.socialLinks = socialLinks
     }
     
     init(from decoder: Decoder) throws {
@@ -45,6 +54,9 @@ struct UserProfile: Codable {
         }
         
         isApproved = try container.decodeIfPresent(Bool.self, forKey: .isApproved) ?? true
+        notificationsEnabled = try container.decodeIfPresent(Bool.self, forKey: .notificationsEnabled) ?? false
+        roleUpgradeRequested = try container.decodeIfPresent(Bool.self, forKey: .roleUpgradeRequested) ?? false
+        socialLinks = try container.decodeIfPresent(SocialLinks.self, forKey: .socialLinks)
     }
     
     func encode(to encoder: Encoder) throws {
@@ -56,6 +68,9 @@ struct UserProfile: Codable {
         try container.encodeIfPresent(pushToken, forKey: .pushToken)
         try container.encode(Timestamp(date: createdAt), forKey: .createdAt)
         try container.encode(isApproved, forKey: .isApproved)
+        try container.encode(notificationsEnabled, forKey: .notificationsEnabled)
+        try container.encode(roleUpgradeRequested, forKey: .roleUpgradeRequested)
+        try container.encodeIfPresent(socialLinks, forKey: .socialLinks)
     }
     
     var asDictionary: [String: Any] {
@@ -64,7 +79,9 @@ struct UserProfile: Codable {
             "email": email,
             "userRole": userRole.rawValue,
             "createdAt": Timestamp(date: createdAt),
-            "isApproved": isApproved
+            "isApproved": isApproved,
+            "notificationsEnabled": notificationsEnabled,
+            "roleUpgradeRequested": roleUpgradeRequested
         ]
         
         if let campusId = campusId {
@@ -73,6 +90,13 @@ struct UserProfile: Codable {
         
         if let pushToken = pushToken {
             dict["pushToken"] = pushToken
+        }
+        
+        if let socialLinks = socialLinks {
+            if let socialLinksData = try? JSONEncoder().encode(socialLinks),
+               let socialLinksDict = try? JSONSerialization.jsonObject(with: socialLinksData) as? [String: Any] {
+                dict["socialLinks"] = socialLinksDict
+            }
         }
         
         return dict
