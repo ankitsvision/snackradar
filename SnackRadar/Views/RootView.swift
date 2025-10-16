@@ -12,7 +12,7 @@ struct RootView: View {
             case .loading:
                 LoadingView()
             case .studentHome:
-                StudentHomeView()
+                StudentTabView()
             case .organizerHome:
                 OrganizerHomeView()
             case .organizerPendingApproval:
