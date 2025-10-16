@@ -4,7 +4,7 @@ import FirebaseCore
 @main
 struct SnackRadarApp: App {
     @StateObject private var appState = AppState()
-    @StateObject private var appSession = AppSession()
+    @StateObject private var sessionViewModel = SessionViewModel()
     
     init() {
         FirebaseApp.configure()
@@ -14,7 +14,7 @@ struct SnackRadarApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(appState)
-                .environmentObject(appSession)
+                .environmentObject(sessionViewModel)
         }
     }
 }
