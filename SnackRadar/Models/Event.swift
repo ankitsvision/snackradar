@@ -9,6 +9,7 @@ struct Event: Codable, Identifiable {
     var organizerId: String
     var organizerName: String
     var location: String
+    var foodType: FoodType
     var startTime: Date
     var endTime: Date
     var imageUrl: String?
@@ -28,6 +29,7 @@ struct Event: Codable, Identifiable {
         case organizerId
         case organizerName
         case location
+        case foodType
         case startTime
         case endTime
         case imageUrl
@@ -44,6 +46,7 @@ struct Event: Codable, Identifiable {
         organizerId: String,
         organizerName: String,
         location: String,
+        foodType: FoodType,
         startTime: Date,
         endTime: Date,
         imageUrl: String? = nil,
@@ -58,6 +61,7 @@ struct Event: Codable, Identifiable {
         self.organizerId = organizerId
         self.organizerName = organizerName
         self.location = location
+        self.foodType = foodType
         self.startTime = startTime
         self.endTime = endTime
         self.imageUrl = imageUrl
@@ -75,6 +79,7 @@ struct Event: Codable, Identifiable {
         organizerId = try container.decode(String.self, forKey: .organizerId)
         organizerName = try container.decode(String.self, forKey: .organizerName)
         location = try container.decode(String.self, forKey: .location)
+        foodType = try container.decodeIfPresent(FoodType.self, forKey: .foodType) ?? .other
         imageUrl = try container.decodeIfPresent(String.self, forKey: .imageUrl)
         isApproved = try container.decodeIfPresent(Bool.self, forKey: .isApproved) ?? false
         
@@ -112,6 +117,7 @@ struct Event: Codable, Identifiable {
         try container.encode(organizerId, forKey: .organizerId)
         try container.encode(organizerName, forKey: .organizerName)
         try container.encode(location, forKey: .location)
+        try container.encode(foodType, forKey: .foodType)
         try container.encode(Timestamp(date: startTime), forKey: .startTime)
         try container.encode(Timestamp(date: endTime), forKey: .endTime)
         try container.encodeIfPresent(imageUrl, forKey: .imageUrl)
@@ -129,6 +135,7 @@ struct Event: Codable, Identifiable {
             "organizerId": organizerId,
             "organizerName": organizerName,
             "location": location,
+            "foodType": foodType.rawValue,
             "startTime": Timestamp(date: startTime),
             "endTime": Timestamp(date: endTime),
             "isApproved": isApproved,
