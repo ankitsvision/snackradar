@@ -1,0 +1,8 @@
+# ViewModels Directory
+
+Place view model files here.
+
+Example structure:
+- SnackListViewModel.swift
+- SnackDetailViewModel.swift
+- ProfileViewModel.swift

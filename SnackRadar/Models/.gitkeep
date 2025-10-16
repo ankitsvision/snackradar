@@ -1,0 +1,8 @@
+# Models Directory
+
+Place data model files here.
+
+Example structure:
+- User.swift
+- Snack.swift
+- Review.swift
