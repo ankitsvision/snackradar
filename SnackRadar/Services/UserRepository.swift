@@ -78,6 +78,29 @@ class UserRepository {
         }
     }
     
+    func removePushToken(uid: String) async throws {
+        let docRef = db.collection(usersCollection).document(uid)
+        
+        do {
+            try await docRef.updateData([
+                "pushToken": FieldValue.delete(),
+                "pushNotificationsEnabled": false
+            ])
+        } catch {
+            throw RepositoryError.firestoreError(error.localizedDescription)
+        }
+    }
+    
+    func updatePushNotificationsEnabled(uid: String, enabled: Bool) async throws {
+        let docRef = db.collection(usersCollection).document(uid)
+        
+        do {
+            try await docRef.updateData(["pushNotificationsEnabled": enabled])
+        } catch {
+            throw RepositoryError.firestoreError(error.localizedDescription)
+        }
+    }
+    
     func updateCampusId(uid: String, campusId: String) async throws {
         let docRef = db.collection(usersCollection).document(uid)
         
